@@ -1,0 +1,25 @@
+name: Build IPA
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Make executable
+        run: chmod +x make.sh
+      - name: Build unsigned
+        run: |
+          CODE_SIGN_STYLE=Manual TEAM_ID="" ./make.sh || true
+      - name: List outputs
+        if: always()
+        run: find build -type f 2>/dev/null | head -60 || true
+      - name: Upload IPA if any
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SingBoxWrapper-ipa
+          path: build/export/*.ipa
+          if-no-files-found: warn
